@@ -13,13 +13,13 @@ import requests # 피드백 전송용
 # --------------------------------------------------------------------------------
 st.set_page_config(page_title="롯데 자이언츠 승부 예측기", page_icon="⚾", layout="wide")
 
-# [New] 우측 상단 'Made by 황오독' 라벨 (HTML/CSS 활용)
+# [New] 우측 상단 'Made by 황오독' 라벨
 st.markdown(
     """
     <style>
     .made-by {
         position: fixed;
-        top: 60px; /* 스트림릿 기본 헤더 아래 위치 */
+        top: 60px;
         right: 20px;
         font-size: 14px;
         font-weight: bold;
@@ -64,7 +64,7 @@ def load_and_train_model():
     df['우리팀 선발'] = df['우리팀 선발'].fillna('Unknown')
     df['유니폼'] = df['유니폼'].fillna('Unknown')
 
-    # 인코딩
+    # 인코더
     le_starter = LabelEncoder()
     df['Starter_Code'] = le_starter.fit_transform(df['우리팀 선발'])
     
@@ -116,4 +116,110 @@ st.sidebar.metric(label="검증 정확도(Accuracy)", value=f"{model_acc * 100:.
 st.sidebar.divider()
 
 st.sidebar.header("1. 경기 정보 입력")
-input_date = st.sidebar.date_input("경기 날짜", value=pd.to_datetime("2025-04-
+# [수정된 부분] 날짜 입력 코드가 끊기지 않도록 주의하세요!
+input_date = st.sidebar.date_input("경기 날짜", value=pd.to_datetime("2025-04-01"))
+input_month = input_date.month
+
+input_starter = st.sidebar.selectbox("우리 팀 선발", le_starter.classes_)
+input_opponent = st.sidebar.selectbox("상대 팀", le_opp.classes_)
+input_home = st.sidebar.radio("경기 장소", ["사직 (홈)", "원정"])
+input_uniform = st.sidebar.selectbox("유니폼", le_uni.classes_)
+input_opp_foreign = st.sidebar.checkbox("상대 선발 외국인?", value=False)
+
+st.sidebar.header("2. 팀 컨디션")
+input_momentum = st.sidebar.slider("최근 5경기 승률", 0.0, 1.0, 0.5)
+input_streak = st.sidebar.number_input("연승/연패", value=0)
+input_rest = st.sidebar.number_input("휴식일", value=1, min_value=0)
+input_games_7d = st.sidebar.slider("최근 7일 경기수", 0, 7, 6)
+
+# [피드백 폼]
+st.sidebar.divider()
+st.sidebar.header("💌 황오독에게 의견 보내기")
+with st.sidebar.form(key='email_form'):
+    user_email = st.text_input("이메일 (답변용)")
+    suggestion = st.text_area("건의사항 / 아이디어")
+    submit_btn = st.form_submit_button("전송하기")
+    
+    if submit_btn:
+        # 본인의 Formspree URL을 넣어주세요!
+        form_url = "https://formspree.io/f/본인의_고유_ID" 
+        try:
+            requests.post(form_url, data={"email":user_email, "message":suggestion})
+            st.success("전송되었습니다!")
+        except:
+            st.error("전송 실패 (URL을 확인해주세요)")
+
+
+# --------------------------------------------------------------------------------
+# 3. 메인 화면 (예측 결과)
+# --------------------------------------------------------------------------------
+st.title(f"⚾ 롯데 자이언츠 승부 예측 AI")
+st.markdown(f"### {input_month}월의 승부를 예측합니다!")
+
+# 데이터 변환
+code_starter = le_starter.transform([input_starter])[0]
+code_opp = le_opp.transform([input_opponent])[0]
+code_uni = le_uni.transform([input_uniform])[0]
+val_is_home = 1 if "홈" in input_home else 0
+val_foreign_opp = 1 if input_opp_foreign else 0
+val_travel = 0 if val_is_home else 200
+
+# 통계치 자동 계산
+avg_h2h = raw_df[raw_df['Opponent_Code'] == code_opp]['상대 전적 승률'].mean()
+if np.isnan(avg_h2h): avg_h2h = 0.5
+avg_season = raw_df['시즌 누적 승률'].mean()
+avg_venue = raw_df[raw_df['Is_Home'] == val_is_home]['홈/원정 구분 승률'].mean()
+if np.isnan(avg_venue): avg_venue = 0.5
+
+# 입력 데이터 생성
+input_data = pd.DataFrame([[
+    code_opp, val_foreign_opp, code_uni, val_is_home,
+    input_momentum, input_rest, val_travel, avg_h2h, avg_season,
+    input_streak, avg_venue, input_games_7d, code_starter, input_month
+]], columns=[
+    'Opponent_Code', 'Foreign_Opp_Pitcher', 'Uniform_Code', 'Is_Home',
+    '최근5경기승률', '휴식기간', '이동거리', '상대 전적 승률', '시즌 누적 승률',
+    '연승/연패', '홈/원정 구분 승률', '최근 7일 경기수', 'Starter_Code', 'Month'
+])
+
+if st.button("🔮 승부 예측하기", type="primary"):
+    
+    prob = model.predict_proba(input_data)[0][1]
+    
+    st.divider()
+    c1, c2 = st.columns([1, 1.5])
+    
+    with c1:
+        st.subheader("승리 확률")
+        st.markdown(f"<h1 style='font-size: 50px; color: #D00F31;'>{prob*100:.1f}%</h1>", unsafe_allow_html=True)
+        if prob >= 0.6:
+            st.success("승리 유력! (치킨각 🍗)")
+        elif prob >= 0.4:
+            st.warning("예측불허 접전! (직관 필요)")
+        else:
+            st.error("고전 예상... (마음의 준비)")
+            
+    with c2:
+        st.subheader("승부처 분석")
+        month_msg = "평이한 계절"
+        if input_month in [3, 4, 5]: month_msg = "🌸 봄데 버프 (승률↑)"
+        elif input_month in [7, 8]: month_msg = "☀️ 한여름 체력 저하 (승률↓)"
+        
+        st.write(f"📅 **계절:** {month_msg}")
+        st.write(f"🏟️ **장소:** {'홈 어드밴티지' if val_is_home else '원정 불리함'}")
+        st.write(f"💪 **선발:** {input_starter}")
+        
+        # 중요도 그래프
+        fig, ax = plt.subplots(figsize=(6, 2))
+        factors = ['계절', '홈/원정', '선발투수']
+        v_month = 60 if input_month in [3,4,5] else (40 if input_month in [7,8] else 50)
+        v_home = 80 if val_is_home else 30
+        v_start = 85 if input_starter in ['반즈','박세웅'] else 50
+        
+        ax.barh(factors, [v_month, v_home, v_start], color=['green', 'blue', 'red'])
+        ax.set_xlim(0, 100)
+        st.pyplot(fig)
+
+# Footer
+st.markdown("---")
+st.markdown("<div style='text-align: center; color: gray;'>Designed by 황오독</div>", unsafe_allow_html=True)
