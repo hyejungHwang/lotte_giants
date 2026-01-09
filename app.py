@@ -13,7 +13,12 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="롯데 자이언츠 승부 예측기 v2", page_icon="⚾", layout="wide")
 
 # 한글 폰트 설정 (깨짐 방지)
-plt.rcParams['font.family'] = 'Malgun Gothic'
+# 운영체제에 따라 폰트 자동 설정
+if os.name == 'posix': # 리눅스(Streamlit Cloud)
+    plt.rcParams['font.family'] = 'NanumGothic'
+else: # 윈도우(내 컴퓨터)
+    plt.rcParams['font.family'] = 'Malgun Gothic'
+
 plt.rcParams['axes.unicode_minus'] = False
 
 @st.cache_data
