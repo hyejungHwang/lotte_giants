@@ -6,8 +6,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
-import requests
-import streamlit.components.v1 as components  # 이 줄이 중요합니다!
+import datetime
+import streamlit.components.v1 as components
 
 # -------------------------------------------------------------------------
 # [GA4 연동 코드] 포트폴리오의 완성도를 높이는 한 줄입니다.
@@ -135,7 +135,7 @@ st.sidebar.divider()
 
 st.sidebar.header("1. 경기 정보 입력")
 # [수정된 부분] 날짜 입력 코드가 끊기지 않도록 주의하세요!
-input_date = st.sidebar.date_input("경기 날짜", value=pd.to_datetime("2025-04-01"))
+input_date = st.sidebar.date_input("경기 날짜", value=datetime.date.today())
 input_month = input_date.month
 
 input_starter = st.sidebar.selectbox("우리 팀 선발", le_starter.classes_)
