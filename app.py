@@ -137,7 +137,7 @@ input_date = st.sidebar.date_input("경기 날짜", value=datetime.date.today())
 input_month = input_date.month
 
 
-pitcher_list = df['Starter_Code'].dropna().unique().tolist()
+pitcher_list = raw_df['우리팀 선발'].dropna().unique().tolist()
 
 input_starter = st.sidebar.selectbox("우리 팀 선발", pitcher_list, index=0)
 input_opponent = st.sidebar.selectbox("상대 팀", le_opp.classes_)
