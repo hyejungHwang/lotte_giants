@@ -184,7 +184,20 @@ input_data = pd.DataFrame([[
 ])
 
 if st.button("🔮 승부 예측하기", type="primary"):
+    # 1. 떠나간 선수들 명단 (이스터 에그용)
+    missing_players = ['감보아', '데이비슨', '반즈', '벨라스케즈']
     
+    # 2. 떠난 선수
+    if input_starter in missing_players:
+        st.markdown(f"""
+        <div style='background-color: #F0F2F6; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #888;'>
+            <h3 style='color: #555; margin: 0;'>🍂 "만약 {input_starter} 선수가 있었더라면..."</h3>
+            <p style='color: #666; font-size: 16px; margin-top: 5px;'>
+                지금은 볼 수 없지만, 그가 마운드에 올랐다고 가정한다면?
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
     prob = model.predict_proba(input_data)[0][1]
     
     st.divider()
