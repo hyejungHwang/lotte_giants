@@ -6,7 +6,25 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
-import requests # 피드백 전송용
+import requests
+import streamlit.components.v1 as components  # 이 줄이 중요합니다!
+
+# -------------------------------------------------------------------------
+# [GA4 연동 코드] 포트폴리오의 완성도를 높이는 한 줄입니다.
+# 본인의 G- 측정 ID를 아래에 입력하세요.
+GA_ID = "G-PNKSFLG8WD" 
+
+ga_js = f"""
+<script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){{dataLayer.push(arguments);}}
+    gtag('js', new Date());
+
+    gtag('config', '{GA_ID}');
+</script>
+"""
+
 
 # --------------------------------------------------------------------------------
 # 1. 기본 설정 및 "Made by 황오독" 추가
@@ -131,24 +149,6 @@ input_momentum = st.sidebar.slider("최근 5경기 승률", 0.0, 1.0, 0.5)
 input_streak = st.sidebar.number_input("연승/연패", value=0)
 input_rest = st.sidebar.number_input("휴식일", value=1, min_value=0)
 input_games_7d = st.sidebar.slider("최근 7일 경기수", 0, 7, 6)
-
-# [피드백 폼]
-st.sidebar.divider()
-st.sidebar.header("💌 황오독에게 의견 보내기")
-with st.sidebar.form(key='email_form'):
-    user_email = st.text_input("이메일 (답변용)")
-    suggestion = st.text_area("건의사항 / 아이디어")
-    submit_btn = st.form_submit_button("전송하기")
-    
-    if submit_btn:
-        # 본인의 Formspree URL을 넣어주세요!
-        form_url = "https://formspree.io/f/본인의_고유_ID" 
-        try:
-            requests.post(form_url, data={"email":user_email, "message":suggestion})
-            st.success("전송되었습니다!")
-        except:
-            st.error("전송 실패 (URL을 확인해주세요)")
-
 
 # --------------------------------------------------------------------------------
 # 3. 메인 화면 (예측 결과)
