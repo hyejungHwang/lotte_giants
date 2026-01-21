@@ -10,8 +10,6 @@ import datetime
 import streamlit.components.v1 as components
 
 # -------------------------------------------------------------------------
-# [GA4 연동 코드] 포트폴리오의 완성도를 높이는 한 줄입니다.
-# 본인의 G- 측정 ID를 아래에 입력하세요.
 GA_ID = "G-PNKSFLG8WD" 
 
 ga_js = f"""
@@ -138,7 +136,8 @@ st.sidebar.header("1. 경기 정보 입력")
 input_date = st.sidebar.date_input("경기 날짜", value=datetime.date.today())
 input_month = input_date.month
 
-pitcher_list = df['우리팀 선발'].dropna().unique().tolist()
+
+pitcher_list = df['Starter_Code'].dropna().unique().tolist()
 
 input_starter = st.sidebar.selectbox("우리 팀 선발", pitcher_list, index=0)
 input_opponent = st.sidebar.selectbox("상대 팀", le_opp.classes_)
